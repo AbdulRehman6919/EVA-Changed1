@@ -336,13 +336,16 @@ class FastRCNNOutputLayers(nn.Module):
         self.use_focal_loss = use_focal_loss
         self.focal_loss_gamma = focal_loss_gamma
         # Support per-class alpha: list of length (num_classes + 1) or scalar.
-        if isinstance(focal_loss_alpha, (list, tuple)):
+        # NOTE: OmegaConf (used by LazyConfig) wraps lists as ListConfig,
+        # which is NOT a subclass of list/tuple. So we check for scalar instead.
+        if isinstance(focal_loss_alpha, (int, float)):
+            self.focal_loss_alpha = focal_loss_alpha
+        else:
+            # list, tuple, ListConfig, or any iterable → convert to tensor buffer.
             self.register_buffer(
                 "focal_loss_alpha",
-                torch.tensor(focal_loss_alpha, dtype=torch.float32),
+                torch.tensor(list(focal_loss_alpha), dtype=torch.float32),
             )
-        else:
-            self.focal_loss_alpha = focal_loss_alpha
 
         if self.use_fed_loss:
             assert self.use_sigmoid_ce, "Please use sigmoid cross entropy loss with federated loss"
