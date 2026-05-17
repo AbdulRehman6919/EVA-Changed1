@@ -338,13 +338,14 @@ class FastRCNNOutputLayers(nn.Module):
         # Support per-class alpha: list of length (num_classes + 1) or scalar.
         # NOTE: OmegaConf (used by LazyConfig) wraps lists as ListConfig,
         # which is NOT a subclass of list/tuple. So we check for scalar instead.
+        # We store as a plain attribute (NOT register_buffer) to avoid EMA
+        # state_dict mismatch when resuming from a checkpoint without this key.
         if isinstance(focal_loss_alpha, (int, float)):
             self.focal_loss_alpha = focal_loss_alpha
         else:
-            # list, tuple, ListConfig, or any iterable → convert to tensor buffer.
-            self.register_buffer(
-                "focal_loss_alpha",
-                torch.tensor(list(focal_loss_alpha), dtype=torch.float32),
+            # list, tuple, ListConfig, or any iterable → convert to tensor.
+            self.focal_loss_alpha = torch.tensor(
+                list(focal_loss_alpha), dtype=torch.float32
             )
 
         if self.use_fed_loss:
