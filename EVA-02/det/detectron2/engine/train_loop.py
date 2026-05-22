@@ -403,12 +403,14 @@ class AMPTrainer(SimpleTrainer):
         """
         assert self.model.training, "[AMPTrainer] model was changed to eval mode!"
         assert torch.cuda.is_available(), "[AMPTrainer] CUDA is required for AMP training!"
+        from torch.cuda.amp import autocast
 
         start = time.perf_counter()
         data = next(self._data_loader_iter)
         data_time = time.perf_counter() - start
 
-        with torch.amp.autocast("cuda"):
+#        with autocast(dtype=torch.bfloat16):
+        with autocast():
             loss_dict = self.model(data)
             if isinstance(loss_dict, torch.Tensor):
                 losses = loss_dict

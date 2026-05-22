@@ -269,7 +269,7 @@ class FastRCNNOutputLayers(nn.Module):
         soft_nms_sigma: float = 0.5,
         soft_nms_iou_threshold: float = 0.3,
         use_focal_loss: bool = False,
-        focal_loss_alpha: float = 0.25,
+        focal_loss_alpha: Union[float, List[float]] = 0.25,
         focal_loss_gamma: float = 2.0,
     ):
         """
@@ -334,8 +334,19 @@ class FastRCNNOutputLayers(nn.Module):
         self.use_sigmoid_ce = use_sigmoid_ce
         self.fed_loss_num_classes = fed_loss_num_classes
         self.use_focal_loss = use_focal_loss
-        self.focal_loss_alpha = focal_loss_alpha
         self.focal_loss_gamma = focal_loss_gamma
+        # Support per-class alpha: list of length (num_classes + 1) or scalar.
+        # NOTE: OmegaConf (used by LazyConfig) wraps lists as ListConfig,
+        # which is NOT a subclass of list/tuple. So we check for scalar instead.
+        # We store as a plain attribute (NOT register_buffer) to avoid EMA
+        # state_dict mismatch when resuming from a checkpoint without this key.
+        if isinstance(focal_loss_alpha, (int, float)):
+            self.focal_loss_alpha = focal_loss_alpha
+        else:
+            # list, tuple, ListConfig, or any iterable → convert to tensor.
+            self.focal_loss_alpha = torch.tensor(
+                list(focal_loss_alpha), dtype=torch.float32
+            )
 
         if self.use_fed_loss:
             assert self.use_sigmoid_ce, "Please use sigmoid cross entropy loss with federated loss"
@@ -508,6 +519,7 @@ class FastRCNNOutputLayers(nn.Module):
         """Softmax-based focal loss over (K + 1) classes (K foreground + background).
 
         Helps rare/hard classes (e.g., Gun) by down-weighting easy examples.
+        Supports per-class alpha weights when `focal_loss_alpha` is a list/tensor.
 
         Args:
             pred_class_logits: shape (N, K + 1) raw logits.
@@ -523,7 +535,14 @@ class FastRCNNOutputLayers(nn.Module):
         log_pt = log_probs[torch.arange(N, device=log_probs.device), gt_idx]
         pt = probs[torch.arange(N, device=probs.device), gt_idx]
         focal_weight = (1.0 - pt).pow(self.focal_loss_gamma)
-        loss = -self.focal_loss_alpha * focal_weight * log_pt
+
+        # Per-class alpha: index into the alpha tensor by gt class.
+        if isinstance(self.focal_loss_alpha, torch.Tensor):
+            alpha = self.focal_loss_alpha.to(gt_idx.device)[gt_idx]  # (N,)
+        else:
+            alpha = self.focal_loss_alpha  # scalar fallback
+
+        loss = -alpha * focal_weight * log_pt
         return loss.mean()
 
     def box_reg_loss(self, proposal_boxes, gt_boxes, pred_deltas, gt_classes):
