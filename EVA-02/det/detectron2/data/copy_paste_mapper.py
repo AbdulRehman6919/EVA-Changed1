@@ -196,6 +196,10 @@ class CopyPasteDatasetMapper:
         if random.random() > self.copy_paste_prob:
             return image, annotations
 
+        # Ensure the image is writeable (augmentation may return read-only arrays)
+        if not image.flags.writeable:
+            image = image.copy()
+
         img_h, img_w = image.shape[:2]
         n_paste = random.randint(1, self.max_paste_instances)
 
