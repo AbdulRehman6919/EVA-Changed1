@@ -171,7 +171,7 @@ class GeneralizedRCNN(nn.Module):
             #     logger.info("============ feat_isnan={}, feat_isinf={} ===============".format(feat_isnan, feat_isinf))
             features[k] = v.float()
 
-        with torch.cuda.amp.autocast(enabled=False):
+        with torch.amp.autocast("cuda", enabled=False):
             if self.proposal_generator is not None:
                 proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
             else:
