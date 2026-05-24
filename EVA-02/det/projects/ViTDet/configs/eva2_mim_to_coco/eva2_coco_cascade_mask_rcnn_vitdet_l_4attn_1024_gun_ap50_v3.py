@@ -186,8 +186,8 @@ dataloader.train.mapper = L(CopyPasteDatasetMapper)(
     use_instance_mask=False,
     recompute_boxes=False,
     # Copy-paste specific settings
-    copy_paste_prob=0.5,         # 50% chance of pasting Gun crops per image
-    max_paste_instances=3,       # paste up to 3 Gun crops per image
+    copy_paste_prob=0.25,        # 25% chance of pasting Gun crops per image (was 0.5 — too aggressive)
+    max_paste_instances=2,       # paste up to 2 Gun crops per image (was 3)
     gun_category_id=2,           # contiguous class id for Gun
     annotations_json="/kaggle/working/OriginalDataset/annotations/armed_train.json",
     image_root="/kaggle/working/OriginalDataset",
