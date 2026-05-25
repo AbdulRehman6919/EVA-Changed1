@@ -29,12 +29,12 @@ from detectron2.data.datasets import register_coco_instances
 _DATASETS = {
     "armed_train": (
         # "/kaggle/working/OriginalDataset/annotations/armed_train.json",
-        "/kaggle/input/datasets/alirehman6666/weaponsdatasetoriginal/OriginalDataset/armed_train.json",
+        "/kaggle/input/datasets/alirehman6666/weaponsdatasetoriginal/OriginalDataset/annotations/armed_train.json",
         "/kaggle/input/datasets/alirehman6666/weaponsdatasetoriginal/OriginalDataset",
     ),
     "armed_val": (
         # "/kaggle/working/OriginalDataset/annotations/armed_val.json",
-        "/kaggle/input/datasets/alirehman6666/weaponsdatasetoriginal/OriginalDataset/armed_val.json",
+        "/kaggle/input/datasets/alirehman6666/weaponsdatasetoriginal/OriginalDataset/annotations/armed_val.json",
 
         "/kaggle/input/datasets/alirehman6666/weaponsdatasetoriginal/OriginalDataset",
     ),
